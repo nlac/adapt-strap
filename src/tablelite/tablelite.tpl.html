@@ -3,7 +3,8 @@
         <tr>
             <th data-ng-repeat="definition in %=columnDefinition%"
                 ng-click="%=tableName%.sortByColumn(definition)"
-                ng-class="{'ad-cursor-pointer': definition.sortable}">
+                ng-class="{'ad-cursor-pointer': definition.sortable}"
+                ng-style="{'width': definition.width}">
                 <div class="pull-right" ng-if="%=tableName%.localConfig.predicate == definition.displayProperty">
                     <i class="glyphicon glyphicon-chevron-up" ng-hide="%=tableName%.localConfig.reverse"></i>
                     <i class="glyphicon glyphicon-chevron-down" ng-show="%=tableName%.localConfig.reverse"></i>

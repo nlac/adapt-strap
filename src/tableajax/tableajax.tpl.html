@@ -2,7 +2,8 @@
     <div class="ad-table-ajax-table-container">
         <table class="%=tableClasses%">
             <tr>
-                <th data-ng-repeat="definition in %=columnDefinition%">
+                <th data-ng-repeat="definition in %=columnDefinition%"
+                    ng-style="{'width': definition.width}">
                     <div ng-if="definition.columnHeaderTemplate"
                          ng-bind-html="definition.columnHeaderTemplate"></div>
                     <div ng-if="definition.columnHeaderDisplayName"
