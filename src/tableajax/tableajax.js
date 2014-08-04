@@ -3,8 +3,8 @@ angular.module('adaptv.adaptStrap.tableajax', ['adaptv.adaptStrap.utils', 'adapt
  * Use this directive if you need to render a table that loads data from ajax.
  */
   .directive('adTableAjax',
-  ['$parse', '$compile', '$templateCache', 'adLoadPage', 'adDebounce', 'adStrapUtils',
-    function ($parse, $compile, $templateCache, adLoadPage, adDebounce, adStrapUtils) {
+  ['$parse', '$compile', '$templateCache', '$adConfig', 'adLoadPage', 'adDebounce', 'adStrapUtils',
+    function ($parse, $compile, $templateCache, $adConfig, adLoadPage, adDebounce, adStrapUtils) {
       'use strict';
       function _link(scope, element, attrs) {
         // We do the name spacing so the if there are multiple adap-table-lite on the scope,
@@ -40,6 +40,7 @@ angular.module('adaptv.adaptStrap.tableajax', ['adaptv.adaptStrap.utils', 'adapt
           adLoadPage(
             page,
             tableModels.items.paging.pageSize,
+            {field: tableModels.localConfig.predicate, reverse: tableModels.localConfig.reverse},
             tableModels.ajaxConfig,
             lastRequestToken
           ).then(
@@ -89,6 +90,14 @@ angular.module('adaptv.adaptStrap.tableajax', ['adaptv.adaptStrap.utils', 'adapt
           }
         };
 
+        tableModels.sortByColumn = function (column) {
+          if (column.sortKey) {
+            tableModels.localConfig.predicate = column.sortKey;
+            tableModels.localConfig.reverse = !tableModels.localConfig.reverse;
+            tableModels.loadPage(tableModels.items.paging.currentPage);
+          }
+        };
+
         // ---------- initialization and event listeners ---------- //
         //We do the compile after injecting the name spacing into the template.
         tableModels.loadPage(1);
@@ -103,7 +112,15 @@ angular.module('adaptv.adaptStrap.tableajax', ['adaptv.adaptStrap.utils', 'adapt
         mainTemplate = mainTemplate.replace(/%=tableName%/g, attrs.tableName).
           replace(/%=columnDefinition%/g, attrs.columnDefinition).
           replace(/%=tableClasses%/g, attrs.tableClasses).
-          replace(/%=paginationBtnGroupClasses%/g, attrs.paginationBtnGroupClasses);
+          replace(/%=paginationBtnGroupClasses%/g, attrs.paginationBtnGroupClasses).
+          replace(/%=icon-firstPage%/g, $adConfig.iconClasses.firstPage).
+          replace(/%=icon-previousPage%/g, $adConfig.iconClasses.previousPage).
+          replace(/%=icon-nextPage%/g, $adConfig.iconClasses.nextPage).
+          replace(/%=icon-lastPage%/g, $adConfig.iconClasses.lastPage).
+          replace(/%=icon-sortAscending%/g, $adConfig.iconClasses.sortAscending).
+          replace(/%=icon-sortDescending%/g, $adConfig.iconClasses.sortDescending).
+          replace(/%=icon-sortable%/g, $adConfig.iconClasses.sortable)
+        ;
         element.empty();
         element.append($compile(mainTemplate)(scope));
       }

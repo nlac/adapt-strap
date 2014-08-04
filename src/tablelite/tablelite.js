@@ -1,22 +1,10 @@
 angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
-  .provider('$tablelite', function () {
-    var defaults = this.defaults = {
-      expandIconClass: 'glyphicon glyphicon-plus-sign',
-      collapseIconClass: 'glyphicon glyphicon-minus-sign',
-      loadingIconClass: 'glyphicon glyphicon-refresh ad-spin'
-    };
-    this.$get = function () {
-      return {
-        settings: defaults
-      };
-    };
-  })
-
 /**
  * Use this directive if you need to render a simple table with local data source.
  */
-  .directive('adTableLite', ['$parse', '$http', '$compile', '$filter', '$templateCache', 'adStrapUtils', 'adDebounce',
-    function ($parse, $http, $compile, $filter, $templateCache, adStrapUtils, adDebounce) {
+  .directive('adTableLite', [
+    '$parse', '$http', '$compile', '$filter', '$templateCache', '$adConfig', 'adStrapUtils', 'adDebounce',
+    function ($parse, $http, $compile, $filter, $templateCache, $adConfig, adStrapUtils, adDebounce) {
       'use strict';
       function _link(scope, element, attrs) {
         // We do the name spacing so the if there are multiple adap-table-lite on the scope,
@@ -61,12 +49,19 @@ angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
               tableModels.items.paging.pageSize
           );
           tableModels.localConfig.pagingArray = [];
-          startPagingPage = ((Math.ceil(page / tableModels.items.paging.pageSize) *
-            tableModels.items.paging.pageSize) - (tableModels.items.paging.pageSize - 1));
-          for (i = 0; i < 5; i++) {
-            if (startPagingPage + i > 0 && startPagingPage + i <= tableModels.items.paging.totalPages) {
-              tableModels.localConfig.pagingArray.push(startPagingPage + i);
+          var TOTAL_PAGINATION_ITEMS = 5;
+          var minimumBound = page - Math.floor(TOTAL_PAGINATION_ITEMS / 2);
+          for (i = minimumBound; i <= page; i++) {
+            if (i > 0) {
+              tableModels.localConfig.pagingArray.push(i);
             }
+          }
+          while (tableModels.localConfig.pagingArray.length < TOTAL_PAGINATION_ITEMS) {
+            if (i > tableModels.items.paging.totalPages) {
+              break;
+            }
+            tableModels.localConfig.pagingArray.push(i);
+            i++;
           }
         });
 
@@ -94,8 +89,8 @@ angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
         };
 
         tableModels.sortByColumn = function (column) {
-          if (column.sortable) {
-            tableModels.localConfig.predicate = column.displayProperty;
+          if (column.sortKey) {
+            tableModels.localConfig.predicate = column.sortKey;
             tableModels.localConfig.reverse = !tableModels.localConfig.reverse;
             tableModels.loadPage(tableModels.items.paging.currentPage);
           }
@@ -106,10 +101,19 @@ angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
         tableModels.loadPage(1);
         attrs.tableClasses = attrs.tableClasses || 'table';
         attrs.paginationBtnGroupClasses = attrs.paginationBtnGroupClasses || 'btn-group btn-group-sm';
-        mainTemplate = mainTemplate.replace(/%=tableName%/g, attrs.tableName).
+        mainTemplate = mainTemplate.
+          replace(/%=tableName%/g, attrs.tableName).
           replace(/%=columnDefinition%/g, attrs.columnDefinition).
           replace(/%=paginationBtnGroupClasses%/g, attrs.paginationBtnGroupClasses).
-          replace(/%=tableClasses%/g, attrs.tableClasses);
+          replace(/%=tableClasses%/g, attrs.tableClasses).
+          replace(/%=icon-firstPage%/g, $adConfig.iconClasses.firstPage).
+          replace(/%=icon-previousPage%/g, $adConfig.iconClasses.previousPage).
+          replace(/%=icon-nextPage%/g, $adConfig.iconClasses.nextPage).
+          replace(/%=icon-lastPage%/g, $adConfig.iconClasses.lastPage).
+          replace(/%=icon-sortAscending%/g, $adConfig.iconClasses.sortAscending).
+          replace(/%=icon-sortDescending%/g, $adConfig.iconClasses.sortDescending).
+          replace(/%=icon-sortable%/g, $adConfig.iconClasses.sortable)
+        ;
         element.empty();
         element.append($compile(mainTemplate)(scope));
 
