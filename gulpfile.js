@@ -18,8 +18,8 @@ var gulp = require('gulp'),
     templates: '*/*.tpl.html',
     docView: '*/docs/*.view.html',
     html: ['src/**/*.html', 'docs/**/*.html'],
-    js: ['src/**/*.js', 'docs/**/*.js'],
-    watch: ['src/**/*.*','!src/**/docs/*.*']
+    js: ['src/**/*.js', 'docs/**/*.js', '!src/**/test/*.*'],
+    watch: ['src/**/*.*','!src/**/docs/*.*', '!src/**/test/*.*']
   },
   banner,
   createModuleName;
@@ -49,10 +49,8 @@ gulp.task('clean:dist', function() {
 gulp.task('scripts:dist', function(foo) {
 
   var combined = combine(
-
     // Build unified package
     gulp.src([src.index, src.scripts], {cwd: src.cwd})
-      .pipe(sourcemaps.init())
       .pipe(ngmin())
       .pipe(concat(pkg.name + '.js', {process: function(src) { return '// Source: ' + path.basename(this.path) + '\n' + (src.trim() + '\n').replace(/(^|\n)[ \t]*('use strict'|"use strict");?\s*/g, '$1'); }}))
       .pipe(concat.header('(function(window, document, undefined) {\n\'use strict\';\n'))
@@ -62,26 +60,7 @@ gulp.task('scripts:dist', function(foo) {
       .pipe(rename(function(path) { path.extname = '.min.js'; }))
       .pipe(uglify())
       .pipe(concat.header(banner))
-      .pipe(sourcemaps.write('./'))
-      .pipe(gulp.dest(src.dist)).pipe(gulp.dest(path.join(src.dist, 'modules'))).on('error', function(err) {
-        util.log(chalk.red(nutil.format('Plugin error: %s', err.message)));
-      }),
-
-    // Build individual modules
-    gulp.src(src.scripts, {cwd: src.cwd})
-      .pipe(sourcemaps.init())
-      .pipe(ngmin())
-      .pipe(rename(function(path){ path.dirname = ''; })) // flatten
-      .pipe(concat.header(banner))
-      .pipe(gulp.dest(path.join(src.dist, 'modules')))
-      .pipe(rename(function(path) { path.extname = '.min.js'; }))
-      .pipe(uglify())
-      .pipe(concat.header(banner))
-      .pipe(sourcemaps.write('./'))
-      .pipe(gulp.dest(path.join(src.dist, 'modules'))).on('error', function(err) {
-        util.log(chalk.red(nutil.format('Plugin error: %s', err.message)));
-      })
-
+      .pipe(gulp.dest(src.dist))
   );
 
   combined.on('error', function(err) {
@@ -114,24 +93,7 @@ gulp.task('templates:dist', function() {
       .pipe(concat.header(banner))
       .pipe(gulp.dest(src.dist)).on('error', function(err) {
         util.log(chalk.red(nutil.format('Plugin error: %s', err.message)));
-      }),
-
-    // Build individual modules
-    gulp.src(src.templates, {cwd: src.cwd})
-      .pipe(htmlmin({removeComments: true, collapseWhitespace: true}))
-      .pipe(ngtemplate({module: createModuleName}))
-      .pipe(ngmin())
-      .pipe(rename(function(path){ path.dirname = ''; })) // flatten
-      .pipe(concat.header(banner))
-      .pipe(gulp.dest(path.join(src.dist, 'modules')))
-      .pipe(rename(function(path) { path.extname = '.min.js'; }))
-      .pipe(uglify())
-      .pipe(concat.header(banner))
-      .pipe(gulp.dest(path.join(src.dist, 'modules')))
-      .on('error', function(err) {
-        util.log(chalk.red(nutil.format('Plugin error: %s', err.message)));
       })
-
   );
 
   combined.on('error', function(err) {
@@ -141,20 +103,6 @@ gulp.task('templates:dist', function() {
   return combined;
 
 });
-
-gulp.task('doc:view', function () {
-  return gulp.src(src.docView, {cwd: src.cwd})
-    .pipe(cheerio(function ($) {
-      var publicTags = $('public').html();
-      $(':first-child').empty();
-      $(':first-child').append(publicTags)
-    }))
-    .pipe(rename(function (path) {
-      path.basename += ".public";
-      path.extname = ".html"
-    }))
-    .pipe(gulp.dest(src.cwd));
-})
 
 // ========== STYLE ========== //
 gulp.task('less', function () {
@@ -185,17 +133,23 @@ gulp.task('style:dist', function() {
 gulp.task('style:dist:live', function() {
   return gulp.src(src.less, {cwd: src.cwd})
     .pipe(less())
+    .on('error', nutil.log)
     .pipe(concat(pkg.name + '.css', {process: function(src) { return '/* Style: ' + path.basename(this.path) + '*/\n' + (src.trim() + '\n').replace(/(^|\n)[ \t]*('use strict'|"use strict");?\s*/g, '$1'); }}))
+    .on('error', nutil.log)
     .pipe(concat.header(banner))
+    .on('error', nutil.log)
     .pipe(gulp.dest(src.dist))
+    .on('error', nutil.log)
     .pipe(cssmin())
+    .on('error', nutil.log)
     .pipe(concat.header(banner))
+    .on('error', nutil.log)
     .pipe(rename({suffix: '.min'}))
+    .on('error', nutil.log)
     .pipe(gulp.dest(src.dist))
+    .on('error', nutil.log)
     .pipe(connect.reload())
-    .on('error', function(err) {
-      util.log(chalk.red(nutil.format('Plugin error: %s', err.message)));
-    });
+    .on('error', nutil.log)
 });
 
 // ========== validate ========== //
@@ -233,19 +187,28 @@ gulp.task('jscs', function () {
     .pipe(jscs());
 });
 
+gulp.task('unit', function() {
+  return gulp.src('./nothing')
+    .pipe(karma({
+      configFile: 'karma.conf.js',
+      action: 'run'
+    }));
+});
+
 // ========== DEFAULT TASKS ========== //
-gulp.task('dist', function() {
-  runSequence(['jshint:fail', 'htmlhint:fail', 'jscs'],'clean:dist', ['templates:dist', 'scripts:dist', 'style:dist']);
+gulp.task('dist', function(callback) {
+  runSequence(['jshint:fail', 'htmlhint:fail', 'jscs'],'clean:dist', ['templates:dist', 'scripts:dist', 'style:dist'], callback);
 });
 
-gulp.task('dist:release', function() {
+gulp.task('dist:release', function(callback) {
   src.dist = 'dist';
-  runSequence(['jshint:fail', 'htmlhint:fail', 'jscs'],'clean:dist', ['templates:dist', 'scripts:dist', 'style:dist']);
+  runSequence(['jshint:fail', 'htmlhint:fail', 'jscs'],'clean:dist', ['templates:dist', 'scripts:dist', 'style:dist'], callback);
 });
 
 
-gulp.task('dist:unsafe', function() {
-  runSequence('clean:dist', ['templates:dist', 'scripts:dist', 'style:dist:live']);
+gulp.task('dist:unsafe', function(callback) {
+  runSequence('clean:dist', ['templates:dist', 'scripts:dist', 'style:dist:live'], callback);
+  return 0;
 });
 
 gulp.task('watch', function () {
@@ -261,9 +224,9 @@ gulp.task('server', function () {
   });
 });
 
-gulp.task('test', ['jshint', 'jscs', 'htmlhint']);
-gulp.task('test:fail', ['jscs', 'jshint:fail', 'htmlhint:fail']);
+gulp.task('validate', ['jshint', 'jscs', 'htmlhint']);
+gulp.task('validate:fail', ['jscs', 'jshint:fail', 'htmlhint:fail']);
 
-gulp.task('default', function() {
-  runSequence('server','dist:unsafe', 'watch');
+gulp.task('default', function(callback) {
+  return runSequence('server','dist:unsafe', 'watch', callback);
 });

@@ -7,11 +7,12 @@ angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
     function ($parse, $http, $compile, $filter, $templateCache, $adConfig, adStrapUtils, adDebounce) {
       'use strict';
       function _link(scope, element, attrs) {
-        // We do the name spacing so the if there are multiple adap-table-lite on the scope,
+        // We do the name spacing so the if there are multiple ad-table-lite on the scope,
         // they don't fight with each other.
         scope[attrs.tableName] = {
           items: {
             list: undefined,
+            allItems: undefined,
             paging: {
               currentPage: 1,
               totalPages: undefined,
@@ -20,9 +21,15 @@ angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
             }
           },
           localConfig: {
-            pagingArray: []
+            pagingArray: [],
+            selectable: attrs.selectedItems ? true : false
           },
-          applyFilter: adStrapUtils.applyFilter
+          selectedItems: scope.$eval(attrs.selectedItems),
+          applyFilter: adStrapUtils.applyFilter,
+          isSelected: adStrapUtils.itemExistsInList,
+          addRemoveItem: adStrapUtils.addRemoveItemFromList,
+          addRemoveAll: adStrapUtils.addRemoveItemsFromList,
+          allSelected: adStrapUtils.itemsExistInList
         };
 
         // ---------- Local data ---------- //
@@ -35,7 +42,6 @@ angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
           var start = (page - 1) * tableModels.items.paging.pageSize,
             end = start + tableModels.items.paging.pageSize,
             i,
-            startPagingPage,
             localItems = $filter('orderBy')(
               scope.$eval(attrs.localDataSource),
               tableModels.localConfig.predicate,
@@ -43,6 +49,7 @@ angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
             );
 
           tableModels.items.list = localItems.slice(start, end);
+          tableModels.items.allItems = scope.$eval(attrs.localDataSource);
           tableModels.items.paging.currentPage = page;
           tableModels.items.paging.totalPages = Math.ceil(
               scope.$eval(attrs.localDataSource).length /

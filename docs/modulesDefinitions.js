@@ -4,6 +4,7 @@ angular.module('adaptv.adaptStrapDocs').constant('adaptStrapModules', [
     moduleName: 'tablelite',
     displayName: 'Table Lite',
     controllerName: 'tableliteCtrl',
+    description: 'simple table UI that renders your local data models and does local pagination/sorting',
     docFiles: [
       'tablelite.view.html',
       'tablelite.ctrl.js'
@@ -57,6 +58,17 @@ angular.module('adaptv.adaptStrapDocs').constant('adaptStrapModules', [
           type: 'String',
           description: 'these classes will be applied to the pagination btn-group tag. ' +
             'Ex (<code>pagination-btn-group-classes="btn-group btn-group-xs"</code>)'
+        },
+        {
+          name: 'selected-items',
+          required: false,
+          default: 'NA',
+          type: 'String',
+          description: 'Path to the array that will hold selected items. ' +
+            '<code>ex: selected-items="models.selectedCars"</code>. If speecified, the rows will be' +
+            ' selectable by checkbox. selected rows will have <code>ad-selected</code> class on it. ' +
+            'You can target this class in your css to apply custom styling to the selected rows.'
+
         }
       ]
     }]
@@ -65,6 +77,7 @@ angular.module('adaptv.adaptStrapDocs').constant('adaptStrapModules', [
     moduleName: 'tableajax',
     displayName: 'Table AJAX',
     controllerName: 'tableajaxCtrl',
+    description: 'advanced table UI that renders remote data models and does remote pagination/sorting',
     docFiles: [
       'tableajax.view.html',
       'tableajax.ctrl.js',
@@ -139,6 +152,7 @@ angular.module('adaptv.adaptStrapDocs').constant('adaptStrapModules', [
     moduleName: 'treebrowser',
     displayName: 'Tree Browser',
     controllerName: 'treebrowserCtrl',
+    description: 'simple tree UI that allows you to brows through local data models in tree structure',
     docFiles: [
       'treebrowser.view.html',
       'treebrowser.ctrl.js',
@@ -222,9 +236,9 @@ angular.module('adaptv.adaptStrapDocs').constant('adaptStrapModules', [
             'Provide the path to toggle function ' +
             '(ex: <code>toggle-callback="methods.loadChildren"</code>). If you do provide this, ' +
             'the tree item will be passed to this function every time some one toggles a tree level. ' +
-            'In this case, you need to set the _expanded' +
+            'In this case, you need to set the _ad_expanded' +
             'property to true or false. You can also set loading property to true or false on the item.' +
-            'If you set _loading to true, the ui will show the _loading icon on that tree level.'
+            'If you set _ad_loading to true, the ui will show the _ad_loading icon on that tree level.'
         },
         {
           name: 'bordered',
@@ -240,6 +254,7 @@ angular.module('adaptv.adaptStrapDocs').constant('adaptStrapModules', [
     moduleName: 'loadingindicator',
     displayName: 'Loading Indicator',
     controllerName: 'loadingIndicatorCtrl',
+    description: 'simple directives to render overlay and inline loading indicators',
     docFiles: [
       'loadingindicator.view.html',
       'loadingindicator.ctrl.js'
