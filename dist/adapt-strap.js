@@ -1,6 +1,6 @@
 /**
  * adapt-strap
- * @version v1.0.1 - 2014-09-15
+ * @version v1.0.2 - 2014-09-16
  * @link https://github.com/Adaptv/adapt-strap
  * @author Kashyap Patel (kashyap@adap.tv)
  * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -145,10 +145,32 @@ angular.module('adaptv.adaptStrap.draggable', []).directive('adDrag', [
         }
       }
       /*
-      * Preserve the width of the element during drag
-      */
+       * Returns the inline property of an element
+       */
+      function getInlineProperty(prop, element) {
+        var styles = $(element).attr('style'), value;
+        if (styles) {
+          styles.split(';').forEach(function (e) {
+            var style = e.split(':');
+            if ($.trim(style[0]) === prop) {
+              value = style[1];
+            }
+          });
+        }
+        return value;
+      }
+      /*
+       * Preserve the width of the element during drag
+       */
       function persistElementWidth() {
+        if (getInlineProperty('width', element)) {
+          element.data('ad-draggable-temp-width', getInlineProperty('width', element));
+        }
+        element.width(element.width());
         element.children().each(function () {
+          if (getInlineProperty('width', this)) {
+            $(this).data('ad-draggable-temp-width', getInlineProperty('width', this));
+          }
           $(this).width($(this).width());
         });
       }
@@ -259,6 +281,20 @@ angular.module('adaptv.adaptStrap.draggable', []).directive('adDrag', [
           position: '',
           'z-index': ''
         });
+        var width = element.data('ad-draggable-temp-width');
+        if (width) {
+          element.css({ width: width });
+        } else {
+          element.css({ width: '' });
+        }
+        element.children().each(function () {
+          var width = $(this).data('ad-draggable-temp-width');
+          if (width) {
+            $(this).css({ width: width });
+          } else {
+            $(this).css({ width: '' });
+          }
+        });
       }
       function moveElement(x, y) {
         element.css({
@@ -347,6 +383,7 @@ angular.module('adaptv.adaptStrap.draggable', []).directive('adDrag', [
               $event: evt
             });
           });
+          elem = null;
         }
       }
       function getCurrentDropElement(x, y, dragEl) {
@@ -718,6 +755,7 @@ function _link(scope, element, attrs) {
           pagingArray: [],
           selectable: attrs.selectedItems ? true : false,
           draggable: attrs.draggable ? true : false,
+          dragChange: scope.$eval(attrs.onDragChange),
           showPaging: $parse(attrs.disablePaging)() ? false : true,
           tableMaxHeight: attrs.tableMaxHeight
         },
@@ -815,6 +853,9 @@ function _link(scope, element, attrs) {
         validDrop = true;
         endPos = dragElement.index() + (tableModels.items.paging.currentPage - 1) * tableModels.items.paging.pageSize - 1;
         adStrapUtils.moveItemInList(initialPos, endPos, tableModels.localConfig.localData);
+        if (tableModels.localConfig.dragChange) {
+          tableModels.localConfig.dragChange(initialPos, endPos, data);
+        }
         if (pageButtonElement) {
           pageButtonElement.removeClass('btn-primary');
           pageButtonElement = null;
@@ -843,6 +884,9 @@ function _link(scope, element, attrs) {
           adStrapUtils.moveItemInList(initialPos, endPos, tableModels.localConfig.localData);
           placeHolder.remove();
           dragElement.remove();
+          if (tableModels.localConfig.dragChange) {
+            tableModels.localConfig.dragChange(initialPos, endPos, data);
+          }
           pageButtonElement.removeClass('btn-primary');
           pageButtonElement = null;
         }
