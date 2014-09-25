@@ -1,6 +1,6 @@
 /**
  * adapt-strap
- * @version v1.0.2 - 2014-09-16
+ * @version v1.0.3 - 2014-09-25
  * @link https://github.com/Adaptv/adapt-strap
  * @author Kashyap Patel (kashyap@adap.tv)
  * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -57,7 +57,8 @@ angular.module('adaptv.adaptStrap', [
 angular.module('adaptv.adaptStrap.draggable', []).directive('adDrag', [
   '$rootScope',
   '$parse',
-  function ($rootScope, $parse) {
+  '$timeout',
+  function ($rootScope, $parse, $timeout) {
     function _link(scope, element, attrs) {
       scope.draggable = attrs.adDrag;
       scope.hasHandle = attrs.adDragHandle === 'false' || typeof attrs.adDragHandle === 'undefined' ? false : true;
@@ -265,13 +266,18 @@ angular.module('adaptv.adaptStrap.draggable', []).directive('adDrag', [
         if (!scope.onDragEndCallback) {
           return;
         }
-        scope.$apply(function () {
-          scope.onDragEndCallback(scope, {
-            $data: scope.data,
-            $dragElement: element,
-            $event: evt
+        // To fix a bug issue where onDragEnd happens before
+        // onDropEnd. Currently the only way around this
+        // Ideally onDropEnd should fire before onDragEnd
+        $timeout(function () {
+          scope.$apply(function () {
+            scope.onDragEndCallback(scope, {
+              $data: scope.data,
+              $dragElement: element,
+              $event: evt
+            });
           });
-        });
+        }, 100);
       }
       // utils functions
       function reset() {
@@ -386,16 +392,13 @@ angular.module('adaptv.adaptStrap.draggable', []).directive('adDrag', [
           elem = null;
         }
       }
-      function getCurrentDropElement(x, y, dragEl) {
+      function getCurrentDropElement(x, y) {
         var bounds = element.offset();
-        var vthold = Math.floor(element.outerHeight() / 3);
-        var xw, yh;
+        // set drag sensitivity
+        var vthold = Math.floor(element.outerHeight() / 6);
         x = x + $window.scrollLeft();
         y = y + $window.scrollTop();
-        xw = x + dragEl.outerWidth();
-        //xw => x + drag element width
-        yh = y + dragEl.outerHeight();
-        return y >= bounds.top + vthold && y <= bounds.top + element.outerHeight() - vthold && (x >= bounds.left && x <= bounds.left + element.outerWidth()) || yh >= bounds.top + vthold && yh <= bounds.top + element.outerHeight() - vthold && (x >= bounds.left && x <= bounds.left + element.outerWidth()) ? element : null;
+        return y >= bounds.top + vthold && y <= bounds.top + element.outerHeight() - vthold && (x >= bounds.left && x <= bounds.left + element.outerWidth()) && (x >= bounds.left && x <= bounds.left + element.outerWidth()) ? element : null;
       }
       init();
     }
@@ -452,7 +455,7 @@ function _link(scope, element, attrs) {
         isSelected: adStrapUtils.itemExistsInList
       };
       // ---------- Local data ---------- //
-      var listModels = scope[attrs.dropdownName], mainTemplate = $templateCache.get('infinitedropdown/infinitedropdown.tpl.html'), lastRequestToken;
+      var listModels = scope[attrs.dropdownName], mainTemplate = $templateCache.get('infinitedropdown/infinitedropdown.tpl.html'), lastRequestToken, watchers = [];
       // ---------- ui handlers ---------- //
       listModels.addRemoveItem = function (event, item, items) {
         event.stopPropagation();
@@ -507,6 +510,7 @@ function _link(scope, element, attrs) {
       // ---------- initialization and event listeners ---------- //
       //We do the compile after injecting the name spacing into the template.
       listModels.loadPage(1);
+      // ---------- set watchers ---------- //
       // reset on parameter change
       if (attrs.ajaxConfig) {
         scope.$watch(attrs.ajaxConfig, function () {
@@ -514,10 +518,19 @@ function _link(scope, element, attrs) {
         }, true);
       }
       if (attrs.localDataSource) {
-        scope.$watch(attrs.localDataSource, function () {
+        watchers.push(scope.$watch(attrs.localDataSource, function () {
           listModels.loadPage(1);
-        }, true);
+        }));
+        watchers.push(scope.$watch(attrs.localDataSource + '.length', function () {
+          listModels.loadPage(1);
+        }));
       }
+      // ---------- disable watchers ---------- //
+      scope.$on('$destroy', function () {
+        watchers.forEach(function (watcher) {
+          watcher();
+        });
+      });
       mainTemplate = mainTemplate.replace(/%=dropdownName%/g, attrs.dropdownName).replace(/%=displayProperty%/g, attrs.displayProperty).replace(/%=templateUrl%/g, attrs.templateUrl).replace(/%=template%/g, attrs.template).replace(/%=labelDisplayProperty%/g, attrs.labelDisplayProperty).replace(/%=btnClasses%/g, attrs.btnClasses || 'btn btn-default').replace(/%=icon-selectedItem%/g, $adConfig.iconClasses.selectedItem);
       element.empty();
       element.append($compile(mainTemplate)(scope));
@@ -768,7 +781,20 @@ function _link(scope, element, attrs) {
         readProperty: adStrapUtils.getObjectProperty
       };
       // ---------- Local data ---------- //
-      var tableModels = scope[attrs.tableName], mainTemplate = $templateCache.get('tablelite/tablelite.tpl.html'), placeHolder = null, pageButtonElement = null, validDrop = false, initialPos;
+      var tableModels = scope[attrs.tableName], mainTemplate = $templateCache.get('tablelite/tablelite.tpl.html'), placeHolder = null, pageButtonElement = null, validDrop = false, initialPos, watchers = [];
+      function moveElementNode(nodeToMove, relativeNode, dragNode) {
+        if (relativeNode.next()[0] === nodeToMove[0]) {
+          relativeNode.before(nodeToMove);
+        } else if (relativeNode.prev()[0] === nodeToMove[0]) {
+          relativeNode.after(nodeToMove);
+        } else {
+          if (relativeNode.next()[0] === dragNode[0]) {
+            relativeNode.before(nodeToMove);
+          } else if (relativeNode.prev()[0] === dragNode[0]) {
+            relativeNode.after(nodeToMove);
+          }
+        }
+      }
       tableModels.items.paging.pageSize = tableModels.items.paging.pageSizes[0];
       // ---------- ui handlers ---------- //
       tableModels.loadPage = adDebounce(function (page) {
@@ -831,30 +857,32 @@ function _link(scope, element, attrs) {
         } else {
           parent.append(placeHolder);
         }
-        $('body').append(dragElement);
       };
       tableModels.onDragEnd = function () {
+        placeHolder.remove();
       };
       tableModels.onDragOver = function (data, dragElement, dropElement) {
-        if (dropElement.next()[0] === placeHolder[0]) {
-          dropElement.before(placeHolder);
-        } else if (dropElement.prev()[0] === placeHolder[0]) {
-          dropElement.after(placeHolder);
+        if (placeHolder) {
+          // Restricts valid drag to current table instance
+          moveElementNode(placeHolder, dropElement, dragElement);
         }
       };
       tableModels.onDropEnd = function (data, dragElement) {
         var endPos;
-        if (placeHolder.next()[0]) {
-          placeHolder.next().before(dragElement);
-        } else if (placeHolder.prev()[0]) {
-          placeHolder.prev().after(dragElement);
-        }
-        placeHolder.remove();
-        validDrop = true;
-        endPos = dragElement.index() + (tableModels.items.paging.currentPage - 1) * tableModels.items.paging.pageSize - 1;
-        adStrapUtils.moveItemInList(initialPos, endPos, tableModels.localConfig.localData);
-        if (tableModels.localConfig.dragChange) {
-          tableModels.localConfig.dragChange(initialPos, endPos, data);
+        if (placeHolder) {
+          // Restricts drop to current table instance
+          if (placeHolder.next()[0]) {
+            placeHolder.next().before(dragElement);
+          } else if (placeHolder.prev()[0]) {
+            placeHolder.prev().after(dragElement);
+          }
+          placeHolder.remove();
+          validDrop = true;
+          endPos = dragElement.index() + (tableModels.items.paging.currentPage - 1) * tableModels.items.paging.pageSize - 1;
+          adStrapUtils.moveItemInList(initialPos, endPos, tableModels.localConfig.localData);
+          if (tableModels.localConfig.dragChange) {
+            tableModels.localConfig.dragChange(initialPos, endPos, data);
+          }
         }
         if (pageButtonElement) {
           pageButtonElement.removeClass('btn-primary');
@@ -899,9 +927,19 @@ function _link(scope, element, attrs) {
       mainTemplate = mainTemplate.replace(/%=tableName%/g, attrs.tableName).replace(/%=columnDefinition%/g, attrs.columnDefinition).replace(/%=paginationBtnGroupClasses%/g, attrs.paginationBtnGroupClasses).replace(/%=tableClasses%/g, attrs.tableClasses).replace(/%=icon-firstPage%/g, $adConfig.iconClasses.firstPage).replace(/%=icon-previousPage%/g, $adConfig.iconClasses.previousPage).replace(/%=icon-nextPage%/g, $adConfig.iconClasses.nextPage).replace(/%=icon-lastPage%/g, $adConfig.iconClasses.lastPage).replace(/%=icon-sortAscending%/g, $adConfig.iconClasses.sortAscending).replace(/%=icon-sortDescending%/g, $adConfig.iconClasses.sortDescending).replace(/%=icon-sortable%/g, $adConfig.iconClasses.sortable).replace(/%=icon-draggable%/g, $adConfig.iconClasses.draggable);
       element.empty();
       element.append($compile(mainTemplate)(scope));
-      scope.$watch(attrs.localDataSource, function () {
+      // ---------- set watchers ---------- //
+      watchers.push(scope.$watch(attrs.localDataSource, function () {
         tableModels.loadPage(tableModels.items.paging.currentPage);
-      }, true);
+      }));
+      watchers.push(scope.$watch(attrs.localDataSource + '.length', function () {
+        tableModels.loadPage(tableModels.items.paging.currentPage);
+      }));
+      // ---------- disable watchers ---------- //
+      scope.$on('$destroy', function () {
+        watchers.forEach(function (watcher) {
+          watcher();
+        });
+      });
     }
     return {
       restrict: 'E',
@@ -984,8 +1022,11 @@ angular.module('adaptv.adaptStrap.utils', []).factory('adStrapUtils', [
           }
         }
         return obj;
-      }, applyFilter = function (value, filter) {
+      }, applyFilter = function (value, filter, item) {
         var parts, filterOptions;
+        if (value && 'function' === typeof value) {
+          return value(item);
+        }
         if (filter) {
           parts = filter.split(':');
           filterOptions = parts[1];
@@ -1060,6 +1101,9 @@ angular.module('adaptv.adaptStrap.utils', []).factory('adStrapUtils', [
         }
         return itemsObject;
       }, getObjectProperty = function (item, property) {
+        if (property && 'function' === typeof property) {
+          return property(item);
+        }
         var arr = property.split('.');
         while (arr.length) {
           item = item[arr.shift()];

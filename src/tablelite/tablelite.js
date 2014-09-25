@@ -45,7 +45,22 @@ angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
           placeHolder = null,
           pageButtonElement = null,
           validDrop = false,
-          initialPos;
+          initialPos,
+          watchers = [];
+
+        function moveElementNode(nodeToMove, relativeNode, dragNode) {
+          if (relativeNode.next()[0] === nodeToMove[0]) {
+            relativeNode.before(nodeToMove);
+          } else if (relativeNode.prev()[0] === nodeToMove[0]) {
+            relativeNode.after(nodeToMove);
+          } else {
+            if (relativeNode.next()[0] === dragNode[0]) {
+              relativeNode.before(nodeToMove);
+            } else if (relativeNode.prev()[0] === dragNode[0]) {
+              relativeNode.after(nodeToMove);
+            }
+          }
+        }
 
         tableModels.items.paging.pageSize = tableModels.items.paging.pageSizes[0];
 
@@ -119,36 +134,37 @@ angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
           } else {
             parent.append(placeHolder);
           }
-          $('body').append(dragElement);
         };
 
         tableModels.onDragEnd = function() {
-
+          placeHolder.remove();
         };
 
         tableModels.onDragOver = function(data, dragElement, dropElement) {
-          if (dropElement.next()[0] === placeHolder[0]) {
-            dropElement.before(placeHolder);
-          } else if (dropElement.prev()[0] === placeHolder[0]) {
-            dropElement.after(placeHolder);
+          if (placeHolder) {
+            // Restricts valid drag to current table instance
+            moveElementNode(placeHolder, dropElement, dragElement);
           }
         };
 
         tableModels.onDropEnd = function(data, dragElement) {
           var endPos;
-          if (placeHolder.next()[0]) {
-            placeHolder.next().before(dragElement);
-          } else if (placeHolder.prev()[0]) {
-            placeHolder.prev().after(dragElement);
-          }
-          placeHolder.remove();
-          validDrop = true;
-          endPos = dragElement.index() + ((tableModels.items.paging.currentPage - 1) *
+          if (placeHolder) {
+            // Restricts drop to current table instance
+            if (placeHolder.next()[0]) {
+              placeHolder.next().before(dragElement);
+            } else if (placeHolder.prev()[0]) {
+              placeHolder.prev().after(dragElement);
+            }
+            placeHolder.remove();
+            validDrop = true;
+            endPos = dragElement.index() + ((tableModels.items.paging.currentPage - 1) *
               tableModels.items.paging.pageSize) - 1;
-          adStrapUtils.moveItemInList(initialPos, endPos, tableModels.localConfig.localData);
+            adStrapUtils.moveItemInList(initialPos, endPos, tableModels.localConfig.localData);
 
-          if (tableModels.localConfig.dragChange) {
-            tableModels.localConfig.dragChange(initialPos, endPos, data);
+            if (tableModels.localConfig.dragChange) {
+              tableModels.localConfig.dragChange(initialPos, endPos, data);
+            }
           }
           if (pageButtonElement) {
             pageButtonElement.removeClass('btn-primary');
@@ -208,9 +224,25 @@ angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
           replace(/%=icon-draggable%/g, $adConfig.iconClasses.draggable);
         element.empty();
         element.append($compile(mainTemplate)(scope));
-        scope.$watch(attrs.localDataSource, function () {
-          tableModels.loadPage(tableModels.items.paging.currentPage);
-        }, true);
+
+        // ---------- set watchers ---------- //
+        watchers.push(
+          scope.$watch(attrs.localDataSource, function () {
+            tableModels.loadPage(tableModels.items.paging.currentPage);
+          })
+        );
+        watchers.push(
+          scope.$watch(attrs.localDataSource + '.length', function () {
+            tableModels.loadPage(tableModels.items.paging.currentPage);
+          })
+        );
+
+        // ---------- disable watchers ---------- //
+        scope.$on('$destroy', function () {
+          watchers.forEach(function (watcher) {
+            watcher();
+          });
+        });
       }
 
       return {

@@ -1,6 +1,6 @@
 
 angular.module('adaptv.adaptStrap.draggable', [])
-  .directive('adDrag', ['$rootScope', '$parse', function ($rootScope, $parse) {
+  .directive('adDrag', ['$rootScope', '$parse', '$timeout', function ($rootScope, $parse, $timeout) {
     function _link(scope, element, attrs) {
       scope.draggable = attrs.adDrag;
       scope.hasHandle = attrs.adDragHandle === 'false' || typeof attrs.adDragHandle === 'undefined' ? false : true;
@@ -103,16 +103,15 @@ angular.module('adaptv.adaptStrap.draggable', [])
         }
       }
 
-
       /*
        * Returns the inline property of an element
        */
       function getInlineProperty (prop, element) {
-        var styles = $(element).attr("style"),
+        var styles = $(element).attr('style'),
           value;
         if (styles) {
-          styles.split(";").forEach(function (e) {
-            var style = e.split(":");
+          styles.split(';').forEach(function (e) {
+            var style = e.split(':');
             if ($.trim(style[0]) === prop) {
               value = style[1];
             }
@@ -246,13 +245,18 @@ angular.module('adaptv.adaptStrap.draggable', [])
         if (!scope.onDragEndCallback) {
           return;
         }
-        scope.$apply(function () {
-          scope.onDragEndCallback(scope, {
-            $data: scope.data,
-            $dragElement: element,
-            $event: evt
+        // To fix a bug issue where onDragEnd happens before
+        // onDropEnd. Currently the only way around this
+        // Ideally onDropEnd should fire before onDragEnd
+        $timeout(function() {
+          scope.$apply(function () {
+            scope.onDragEndCallback(scope, {
+              $data: scope.data,
+              $dragElement: element,
+              $event: evt
+            });
           });
-        });
+        }, 100);
       }
 
       // utils functions
@@ -276,7 +280,12 @@ angular.module('adaptv.adaptStrap.draggable', [])
       }
 
       function moveElement(x, y) {
-        element.css({ left: x, top: y, position: 'fixed', 'z-index': 99999 });
+        element.css({
+          left: x,
+          top: y,
+          position: 'fixed',
+          'z-index': 99999
+        });
       }
 
       init();
@@ -357,6 +366,7 @@ angular.module('adaptv.adaptStrap.draggable', [])
       }
 
       function onDragEnd(evt, obj) {
+
         if (!dropEnabled) {
           return;
         }
@@ -375,20 +385,17 @@ angular.module('adaptv.adaptStrap.draggable', [])
         }
       }
 
-      function getCurrentDropElement(x, y, dragEl) {
+      function getCurrentDropElement(x, y) {
         var bounds = element.offset();
-        var vthold = Math.floor(element.outerHeight() / 3);
-        var xw, yh;
+        // set drag sensitivity
+        var vthold = Math.floor(element.outerHeight() / 6);
 
         x = x + $window.scrollLeft();
         y = y + $window.scrollTop();
-        xw = x + dragEl.outerWidth(); //xw => x + drag element width
-        yh = y + dragEl.outerHeight();
 
         return ((y >= (bounds.top + vthold) && y <= (bounds.top + element.outerHeight() - vthold)) &&
-            (x >= (bounds.left) && x <= (bounds.left + element.outerWidth()))) || ((yh >= (bounds.top + vthold) &&
-                yh <= (bounds.top + element.outerHeight() - vthold)) && (x >= (bounds.left) &&
-                  x <= (bounds.left + element.outerWidth()))) ? element : null;
+            (x >= (bounds.left) && x <= (bounds.left + element.outerWidth()))) && (x >= bounds.left &&
+                  x <= (bounds.left + element.outerWidth())) ? element : null;
       }
       init();
     }
