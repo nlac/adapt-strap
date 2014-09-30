@@ -33,7 +33,7 @@ module.exports = function(config) {
     // list of files to exclude
     exclude: [
       '**/gulpfile.js',
-      'app/features/**/*E2ESpec.js'
+      'src/**/*.e2e.js'
     ],
 
 
@@ -41,10 +41,9 @@ module.exports = function(config) {
     // possible values: 'dots', 'progress', 'junit', 'growl', 'coverage'
     reporters: ['progress', 'coverage'],
     preprocessors: {
-      'app/core/**/!(*Test).js': 'coverage',
-      'app/features/**/*.js': 'coverage',
-      '!app/features/**/test/*.js': 'coverage',
-      '!app/features/**/(*E2ESpec).js': 'coverage'
+      'src/**/!(*.test).js': 'coverage',
+      '!sec/**/test/*.js': 'coverage',
+      '!src/**/(*.e2e).js': 'coverage'
     },
 
     junitReporter: {
@@ -53,8 +52,10 @@ module.exports = function(config) {
     },
 
     coverageReporter: {
-      type : 'lcov',
-      dir : 'coverage/'
+      reporters:[
+        {type: 'lcov', dir:'coverage/'},
+        {type: 'text-summary', dir:'coverage/'}
+      ]
     },
 
     // web server port
