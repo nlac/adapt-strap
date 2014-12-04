@@ -218,6 +218,7 @@ angular.module('adaptv.adaptStrap.utils', [])
               adStrapUtils.evalObjectProperty(result.data, pagingConfig.response.totalItems) /
               options.pageSize
           ),
+          totalItems: Math.ceil(adStrapUtils.evalObjectProperty(result.data, pagingConfig.response.totalItems)),
           pagingArray: [],
           token: options.token
         };
@@ -254,13 +255,16 @@ angular.module('adaptv.adaptStrap.utils', [])
         end = start + options.pageSize,
         i,
         itemsObject = options.localData,
-        localItems;
+        localItems = itemsObject;
 
-      localItems = $filter('orderBy')(
-        itemsObject,
-        options.sortKey,
-        options.sortDirection
-      );
+      if (options.sortKey) {
+        localItems = $filter('orderBy')(
+          itemsObject,
+          options.sortKey,
+          options.sortDirection
+        );
+      }
+
       response.items = localItems.slice(start, end);
       response.allItems = itemsObject;
       response.currentPage = options.pageNumber;

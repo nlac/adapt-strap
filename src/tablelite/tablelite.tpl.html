@@ -16,19 +16,20 @@
           ng-click="sortByColumn(definition)"
           ng-class="{'ad-cursor-pointer': definition.sortKey}"
           ng-style="{'width': definition.width}">
-        <div class="pull-right"
+        <div class="ad-display-inline-block"
+             ng-if="definition.columnHeaderTemplate"
+             ad-compile-template="definition.columnHeaderTemplate"></div>
+        <div class="ad-display-inline-block"
+             ng-bind="definition.columnHeaderDisplayName"></div>
+        <div ng-class="{'ad-display-inline-block': attrs.snugSortIcons, 'pull-right': !attrs.snugSortIcons}"
              ng-if="definition.sortKey && localConfig.predicate == definition.sortKey">
           <i ng-class="iconClasses.sortAscending" ng-hide="localConfig.reverse"></i>
           <i ng-class="iconClasses.sortDescending" ng-show="localConfig.reverse"></i>
         </div>
-        <div class="pull-right"
+        <div ng-class="{'ad-display-inline-block': attrs.snugSortIcons, 'pull-right': !attrs.snugSortIcons}"
              ng-if="definition.sortKey && localConfig.predicate != definition.sortKey">
           <i ng-class="iconClasses.sortable"></i>
         </div>
-        <div ng-if="definition.columnHeaderTemplate"
-             ng-bind-html="definition.columnHeaderTemplate"></div>
-        <div ng-if="definition.columnHeaderDisplayName"
-             ng-bind="definition.columnHeaderDisplayName"></div>
       </th>
     </tr>
   </table>
@@ -48,19 +49,21 @@
             ng-click="sortByColumn(definition)"
             ng-class="{'ad-cursor-pointer': definition.sortKey}"
             ng-style="{'width': definition.width}">
-          <div class="pull-right"
+          <div class="ad-display-inline-block"
+               ng-if="definition.columnHeaderTemplate"
+               ad-compile-template="definition.columnHeaderTemplate"></div>
+          <div class="ad-display-inline-block"
+               ng-if="definition.columnHeaderDisplayName"
+               ng-bind="definition.columnHeaderDisplayName"></div>
+          <div ng-class="{'ad-display-inline-block': attrs.snugSortIcons, 'pull-right': !attrs.snugSortIcons}"
                ng-if="definition.sortKey && localConfig.predicate == definition.sortKey">
             <i ng-class="iconClasses.sortAscending" ng-hide="localConfig.reverse"></i>
             <i ng-class="iconClasses.sortDescending" ng-show="localConfig.reverse"></i>
           </div>
-          <div class="pull-right"
+          <div ng-class="{'ad-display-inline-block': attrs.snugSortIcons, 'pull-right': !attrs.snugSortIcons}"
                ng-if="definition.sortKey && localConfig.predicate != definition.sortKey">
             <i ng-class="iconClasses.sortable"></i>
           </div>
-          <div ng-if="definition.columnHeaderTemplate"
-               ng-bind-html="definition.columnHeaderTemplate"></div>
-          <div ng-if="definition.columnHeaderDisplayName"
-               ng-bind="definition.columnHeaderDisplayName"></div>
         </th>
       </tr>
       <tr ng-if="!attrs.draggable" data-ng-repeat="item in items.list"
@@ -137,15 +140,16 @@
                 ng-disabled="items.paging.currentPage == 1">
           <i ng-class="iconClasses.previousPage"></i>
         </button>
-        <button type="button"
-                id="btnPrev"
-                class="btn btn-default"
-                ng-if="attrs.draggable"
-                ad-drop="true"
-                ad-drop-over="onNextPageButtonOver($data, $dragElement, $dropElement, $event)"
-                ad-drop-end="onNextPageButtonDrop($data, $dragElement, $dropElement, $event)"
-                ng-click="loadPreviousPage()"
-                ng-disabled="items.paging.currentPage == 1">
+      <button type="button"
+              id="btnPrev"
+              class="btn btn-default"
+              ng-if="attrs.draggable"
+              ad-drop="true"
+              ad-drop-over="onNextPageButtonOver($data, $dragElement, $dropElement, $event)"
+              ad-drop-leave="onNextPageButtonLeave($data, $dragElement, $dropElement, $event)"
+              ad-drop-end="onNextPageButtonDrop($data, $dragElement, $dropElement, $event)"
+              ng-click="loadPreviousPage()"
+              ng-disabled="items.paging.currentPage == 1">
           <i ng-class="iconClasses.previousPage"></i>
         </button>
         <button type="button"
@@ -168,6 +172,7 @@
                 ng-if="attrs.draggable"
                 ad-drop="true"
                 ad-drop-over="onNextPageButtonOver($data, $dragElement, $dropElement, $event)"
+                ad-drop-leave="onNextPageButtonLeave($data, $dragElement, $dropElement, $event)"
                 ad-drop-end="onNextPageButtonDrop($data, $dragElement, $dropElement, $event)"
                 ng-click="loadNextPage()"
                 ng-disabled="items.paging.currentPage == items.paging.totalPages">
