@@ -142,10 +142,10 @@
     "@navbar-padding-horizontal": "floor((@grid-gutter-width / 2))",
     "@navbar-padding-vertical": "((@navbar-height - @line-height-computed) / 2)",
     "@navbar-collapse-max-height": "340px",
-    "@navbar-default-color": "#2C3E50",
-    "@navbar-default-bg": "#ffffff",
+    "@navbar-default-color": "#777",
+    "@navbar-default-bg": "#f8f8f8",
     "@navbar-default-border": "darken(@navbar-default-bg, 6.5%)",
-    "@navbar-default-link-color": "#2C3E50",
+    "@navbar-default-link-color": "#777",
     "@navbar-default-link-hover-color": "#333",
     "@navbar-default-link-hover-bg": "transparent",
     "@navbar-default-link-active-color": "#555",
@@ -329,7 +329,7 @@
     "@thumbnail-border-radius": "@border-radius-base",
     "@thumbnail-caption-color": "@text-color",
     "@thumbnail-caption-padding": "9px",
-    "@well-bg": "#f5f5f5",
+    "@well-bg": "#ffffff",
     "@well-border": "darken(@well-bg, 7%)",
     "@badge-color": "#fff",
     "@badge-link-hover-color": "#fff",
@@ -338,7 +338,7 @@
     "@badge-active-bg": "#fff",
     "@badge-font-weight": "bold",
     "@badge-line-height": "1",
-    "@badge-border-radius": "0px",
+    "@badge-border-radius": "10px",
     "@breadcrumb-padding-vertical": "8px",
     "@breadcrumb-padding-horizontal": "15px",
     "@breadcrumb-bg": "#f5f5f5",
@@ -425,5 +425,5 @@
     "scrollspy.js",
     "transition.js"
   ],
-  "customizerUrl": "http://getbootstrap.com/customize/?id=044f3d8d9349a8e43e78"
+  "customizerUrl": "http://getbootstrap.com/customize/?id=0e6a0e69c20407ddbfc4"
 }
