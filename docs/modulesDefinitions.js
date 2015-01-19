@@ -1,6 +1,26 @@
 // ========== modules documentation configuration ========== //
 angular.module('adaptv.adaptStrapDocs').constant('adaptStrapModules', [
   {
+    moduleName: 'alerts',
+    displayName: 'Global Alerts',
+    controllerName: 'alertCtrl',
+    description: 'shows notification messages to the user.',
+    docFiles: [
+      'alerts.view.html',
+      'alerts.ctrl.js'
+    ],
+    directives: [{
+      name: 'ad-alerts',
+      options: [{
+        name: 'timeout',
+        required: false,
+        default: 'NA',
+        type: 'String/Number',
+        description: 'The number of milliseconds the alert is visible, before it auto closes'
+      }]
+    }]
+  },
+  {
     moduleName: 'tablelite',
     displayName: 'Table Lite',
     controllerName: 'tableliteCtrl',
@@ -102,6 +122,15 @@ angular.module('adaptv.adaptStrapDocs').constant('adaptStrapModules', [
             ' selectable by checkbox. selected rows will have <code>ad-selected</code> class on it. ' +
             'You can target this class in your css to apply custom styling to the selected rows.'
 
+        },
+        {
+          name: 'search-text',
+          required: false,
+          default: 'NA',
+          type: 'String',
+          description: 'The text to search by' +
+            '<code>ex: search-text="models.searchText"</code>. If speecified, the rows' +
+            ' will be searched and filtered by the content and the search enabled columns '
         },
         {
           name: 'btn-classes',
@@ -428,8 +457,9 @@ angular.module('adaptv.adaptStrapDocs').constant('adaptStrapModules', [
             required: 'false',
             default: 'NA',
             type: 'Function',
-            description: 'Callback for drag begin event. It fires when a drag starts. it should take 3' +
-              'parameters <code>$data, $dragElement, $event</code>.'
+            description: 'Callback for drag begin event. It fires when a drag starts. it should take 3 ' +
+              'parameters <code>$data, $dragElement, $event</code>. <strong>Note:</strong> Use <code>' +
+              '$dragElement.el</code>to get the element.'
           },
           {
             name: 'ad-drag-end',
@@ -437,7 +467,8 @@ angular.module('adaptv.adaptStrapDocs').constant('adaptStrapModules', [
             default: 'NA',
             type: 'Function',
             description: 'Callback for drag end event. It fires when a drag has ended, always after the' +
-              'drop end. It should take 3 parameters <code>$data, $dragElement, $event</code>.'
+              'drop end. It should take 3 parameters <code>$data, $dragElement, $event</code>. ' +
+              '<strong>Note:</strong> Use <code>$dragElement.el</code> to get the actual element.'
           }
         ]
       },
@@ -457,7 +488,8 @@ angular.module('adaptv.adaptStrapDocs').constant('adaptStrapModules', [
             default: 'NA',
             type: 'Function',
             description: 'Callback for the drop over event. It fires on drag over a valid drop element. ' +
-              'It takes 4 parameters <code>$data, $dragElement, $dropElement, $event</code>.'
+              'It takes 4 parameters <code>$data, $dragElement, $dropElement, $event</code>. ' +
+              '<strong>Note:</strong> Use <code>$dragElement/$dropElement.el</code> to get the element.'
           },
           {
             name: 'ad-drop-end',
