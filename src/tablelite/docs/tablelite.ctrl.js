@@ -91,20 +91,24 @@ angular.module('adaptv.adaptStrapDocs')
       {
         columnHeaderDisplayName: 'Model',
         displayProperty: 'name',
-        sortKey: 'name'
+        sortKey: 'name',
+        columnSearchProperty: 'name',
+        visible: true
       },
       {
         columnHeaderTemplate: '<span><i class="glyphicon glyphicon-calendar"></i> Model Year</span>',
         template: '<strong>{{ item.modelYear }}</strong>',
         sortKey: 'modelYear',
-        width: '12em'
+        width: '12em',
+        columnSearchProperty: 'modelYear'
       },
       {
         columnHeaderTemplate: '<span><i class="glyphicon glyphicon-usd"></i> Price</span>',
         displayProperty: 'price',
         cellFilter: 'currency',
         sortKey: 'price',
-        width: '9em'
+        width: '9em',
+        columnSearchProperty: 'price'
       },
       {
         columnHeaderDisplayName: 'Buy',
@@ -124,6 +128,10 @@ angular.module('adaptv.adaptStrapDocs')
     // ========== ui handlers ========== //
     $scope.buyCar = function (car) {
       alert(car.name);
+    };
+
+    $scope.rowExpanded = function (car) {
+      alert(car.name + ' row expanded');
     };
 
     $scope.checkRowSelected = function (item, index) {

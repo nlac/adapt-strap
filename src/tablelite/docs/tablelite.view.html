@@ -7,6 +7,7 @@
 
   <!-- ========== Usage ========== -->
   <ad-table-lite table-name="carsForSale"
+                 enable-column-search="true"
                  column-definition="carsTableColumnDefinition"
                  local-data-source="models.carsForSale"
                  page-sizes="[7, 20]"
@@ -20,7 +21,8 @@
                  snug-sort-icons="true"
                  search-text="models.searchText"
                  row-class-provider="checkRowSelected"
-                 row-expand-template="src/tablelite/docs/carMoreInfo.html">
+                 row-expand-template="src/tablelite/docs/carMoreInfo.html"
+                 row-expand-callback="rowExpanded">
   </ad-table-lite>
 
   <h3 class="text-muted">Selected Items:</h3>

@@ -3,14 +3,15 @@ angular.module('adaptv.adaptStrap.tableajax', ['adaptv.adaptStrap.utils', 'adapt
  * Use this directive if you need to render a table that loads data from ajax.
  */
   .directive('adTableAjax',
-  ['$parse', '$adConfig', 'adLoadPage', 'adDebounce', 'adStrapUtils',
-    function ($parse, $adConfig, adLoadPage, adDebounce, adStrapUtils) {
+  ['$parse', '$filter', '$adConfig', 'adLoadPage', 'adDebounce', 'adStrapUtils',
+    function ($parse, $filter, $adConfig, adLoadPage, adDebounce, adStrapUtils) {
       'use strict';
       function controllerFunction($scope, $attrs) {
         // ---------- $scope initialization ---------- //
         $scope.attrs = $attrs;
         $scope.iconClasses = $adConfig.iconClasses;
         $scope.adStrapUtils = adStrapUtils;
+        $scope.tableClasses = $adConfig.componentClasses.tableAjaxClass;
         $scope.onDataLoadedCallback = $parse($attrs.onDataLoaded) || null;
         $scope.items = {
           list: undefined,
@@ -18,8 +19,8 @@ angular.module('adaptv.adaptStrap.tableajax', ['adaptv.adaptStrap.utils', 'adapt
             currentPage: 1,
             totalPages: undefined,
             totalItems: undefined,
-            pageSize: Number($attrs.pageSize) || 10,
-            pageSizes: $parse($attrs.pageSizes)() || [10, 25, 50]
+            pageSize: Number($attrs.pageSize) || $adConfig.paging.pageSize,
+            pageSizes: $parse($attrs.pageSizes)() || $adConfig.paging.pageSizes
           }
         };
         $scope.localConfig = {
@@ -31,6 +32,7 @@ angular.module('adaptv.adaptStrap.tableajax', ['adaptv.adaptStrap.utils', 'adapt
         };
         $scope.ajaxConfig = $scope.$eval($attrs.ajaxConfig);
         $scope.columnDefinition = $scope.$eval($attrs.columnDefinition);
+        $scope.visibleColumnDefinition = $filter('filter')($scope.columnDefinition, $scope.columnVisible);
 
         // ---------- Local data ---------- //
         var lastRequestToken,
@@ -121,6 +123,10 @@ angular.module('adaptv.adaptStrap.tableajax', ['adaptv.adaptStrap.utils', 'adapt
           }
         };
 
+        $scope.columnVisible = function(column) {
+          return column.visible !== false;
+        };
+
         $scope.sortByColumn = function (column) {
           var initialSortDirection = true;
           if ($attrs.onClickSortDirection === 'DEC') {
@@ -154,6 +160,17 @@ angular.module('adaptv.adaptStrap.tableajax', ['adaptv.adaptStrap.utils', 'adapt
           return rowClass;
         };
 
+        $scope.toggle = function(event, index, item) {
+          event.stopPropagation();
+          adStrapUtils.addRemoveItemFromList(index, $scope.localConfig.expandedItems);
+          if (adStrapUtils.itemExistsInList(index, $scope.localConfig.expandedItems)) {
+            var rowExpandCallback = $scope.$eval($attrs.rowExpandCallback);
+            if (rowExpandCallback) {
+              rowExpandCallback(item);
+            }
+          }
+        };
+
         // ---------- initialization and event listeners ---------- //
         $scope.loadPage(1);
 
@@ -166,6 +183,7 @@ angular.module('adaptv.adaptStrap.tableajax', ['adaptv.adaptStrap.utils', 'adapt
         watchers.push(
           $scope.$watchCollection($attrs.columnDefinition, function () {
             $scope.columnDefinition = $scope.$eval($attrs.columnDefinition);
+            $scope.visibleColumnDefinition = $filter('filter')($scope.columnDefinition, $scope.columnVisible);
           })
         );
 

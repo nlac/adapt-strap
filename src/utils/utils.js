@@ -14,19 +14,21 @@ angular.module('adaptv.adaptStrap.utils', [])
         return obj;
       },
       applyFilter = function (value, filter, item) {
-        var parts,
-          filterOptions;
+        var filterName,
+          filterOptions,
+          optionsIndex;
 
         if (value && ('function' === typeof value)) {
           return value(item);
         }
         if (filter) {
-          parts = filter.split(':');
-          filterOptions = parts[1];
-          if (filterOptions) {
-            value = $filter(parts[0])(value, filterOptions);
+          optionsIndex = filter.indexOf(':');
+          if (optionsIndex > -1) {
+            filterName = filter.substring(0, optionsIndex);
+            filterOptions = filter.substring(optionsIndex + 1);
+            value = $filter(filterName)(value, filterOptions);
           } else {
-            value = $filter(parts[0])(value);
+            value = $filter(filter)(value);
           }
         }
         return value;
@@ -114,6 +116,22 @@ angular.module('adaptv.adaptStrap.utils', [])
           item = item[arr.shift()];
         }
         return item;
+      }, hasAtLeastOnePropertyWithValue = function (obj) {
+        var has = false, name, value;
+        for (name in obj) {
+          value = obj[name];
+          if (value instanceof Array) {
+            if (value.length > 0) {
+              has = true;
+            }
+          } else if (!!value) {
+            has = true;
+          }
+          if (has) {
+            break;
+          }
+        }
+        return has;
       };
 
     return {
@@ -128,7 +146,8 @@ angular.module('adaptv.adaptStrap.utils', [])
       addRemoveItemsFromList: addRemoveItemsFromList,
       moveItemInList: moveItemInList,
       parse: parse,
-      getObjectProperty: getObjectProperty
+      getObjectProperty: getObjectProperty,
+      hasAtLeastOnePropertyWithValue: hasAtLeastOnePropertyWithValue
     };
 
   }])
