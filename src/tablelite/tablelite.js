@@ -35,7 +35,9 @@ angular.module('adaptv.adaptStrap.tablelite', ['adaptv.adaptStrap.utils'])
           localData: adStrapUtils.parse($scope.$eval($attrs.localDataSource)),
           pagingArray: [],
           dragChange: $scope.$eval($attrs.onDragChange),
-          expandedItems: []
+          expandedItems: [],
+          predicate: $scope.$eval($attrs.sortKey),
+          reverse: $scope.$eval($attrs.sortDirection)
         };
 
         $scope.selectedItems = $scope.$eval($attrs.selectedItems);
